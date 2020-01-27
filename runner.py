@@ -1,26 +1,42 @@
 from subprocess import call
 
-num_of_iterations = ["10000"]
 
-num_of_islands = ["5", "10"]
-migration_ratio = ["2", "10", "20"]
+num_of_islands = ["5"]
+migration_ratio = ["2"]
 
 models = [
-    "convection",
-    "island"
+    "convection"
 ]
 
-benchmarks = [
-    "h1",
-    "ackley",
-    "himmelblau",
-    "schwefel",
-    "rastrigin"
+numbers = [
+    50, 100, 150, 200, 250, 300, 350, 400, 450, 500
 ]
+
+students = [
+    "132225",
+    "132214",
+    "132219",
+    "132195",
+    "125342",
+    "132209",
+    "132207",
+    "132221",
+    "127173",
+    "132349",
+    "132348",
+    "132197",
+    "132319",
+    "132215",
+    "127329",
+    "132280",
+    "126151",
+    "132192"
+]
+
 for model in models:
-    for benchmarkName in benchmarks[1:2]:
+    for student in ["125342"]:
         for islandNum in num_of_islands:
             for ratio in migration_ratio:
-                for maxIterations in num_of_iterations:
-                    call(["python", "algorithm.py", benchmarkName, islandNum,
-                          ratio, maxIterations, model])
+                for n in numbers:
+                    call(["python", "algorithm.py", "input/in"+student+"_"+str(n)+".txt", islandNum,
+                          ratio, str(n), model])

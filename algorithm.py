@@ -21,12 +21,12 @@ import os
 if(len(sys.argv) != 6):
     print("Wrong number of arguments!")
     print("Usage:", sys.argv[0],
-          "BENCHMARK_NAME NUM_OF_ISLANDS MIGRATIONS_RATIO max_iterations_wo_improvement MODEL")
+          "fileName NUM_OF_ISLANDS MIGRATIONS_RATIO max_iterations_wo_improvement MODEL")
     sys.exit()
 
 
 # nazwa benchmarka
-BENCHMARK_NAME = sys.argv[1]
+fileName = sys.argv[1]
 
 # Początkowa liczba wysp
 NUM_OF_ISLANDS = int(sys.argv[2])
@@ -34,8 +34,8 @@ NUM_OF_ISLANDS = int(sys.argv[2])
 # Mnożnik migracji
 MIGRATION_RATIO = int(sys.argv[3])
 
-# max liczba wywołań bez poprawy
-max_iterations_wo_improvement = int(sys.argv[4])
+# liczba zadan w przykladzie
+number_of_tasks = int(sys.argv[4])
 
 # model
 MODEL = sys.argv[5]
@@ -47,20 +47,7 @@ FREQ = MIGRATION_RATIO * POPULATION_SIZE
 CXPB, MUTPB = 0.1, 1
 
 
-if(BENCHMARK_NAME == "h1"):
-    toolbox = bc.getH1ToolBox()
-
-if(BENCHMARK_NAME == "ackley"):
-    toolbox = bc.getAckleyToolBox()
-
-if(BENCHMARK_NAME == "himmelblau"):
-    toolbox = bc.getHimmelblauToolBox()
-
-if(BENCHMARK_NAME == "schwefel"):
-    toolbox = bc.getSchwefelToolBox()
-
-if(BENCHMARK_NAME == "rastrigin"):
-    toolbox = bc.getRastriginToolBox()
+toolbox = bc.getPTSZToolBox(fileName)
 
 
 toolbox.register("map", map)
@@ -92,71 +79,47 @@ toolbox.register("algorithm", algorithms.eaSimple, toolbox=toolbox,
 logbooks = []
 
 bestIndividuals = []
-start_time = time.time()
+
 iterations_wo_improvement = 0
 
 # Początkowa populacja
 islands = [toolbox.population(n=ISLAND_POPULATION_SIZE)
            for i in range(NUM_OF_ISLANDS)]
 
-toolbox.migrate(islands)
+if(NUM_OF_ISLANDS > 1):
+    toolbox.migrate(islands)
+
+for island in islands:
+    hallOfFame.update(island)
 
 
 first = True
 previous_fitness = None
+maxTime = 100 * number_of_tasks
 
-
-print("Running:", BENCHMARK_NAME)
+print("Running:", fileName)
 print("Islands number:", NUM_OF_ISLANDS)
 print("Migration every", FREQ, "steps")
-print("Max iterations without improvement:", max_iterations_wo_improvement)
+print("Max time [ms]:", maxTime)
 print("Model:", MODEL)
 print("----------START---------")
-while(iterations_wo_improvement <= max_iterations_wo_improvement / FREQ):
+start_time = time.time()
+while((time.time() - start_time) * 1000 < maxTime):
 
     results = toolbox.map(toolbox.algorithm, islands)
 
-    ziped = list(map(list, zip(*results)))
-    islands = ziped[0]
+    islands = [island for island, logbook in results]
 
-    # Jeżeli znajdzie lepszego osobnika niż najlepszy obecnie, to nadpisuje go
+    print("Hall of fame:", hallOfFame[0], hallOfFame[0].fitness)
 
-    if previous_fitness == None:
-        previous_fitness = hallOfFame[0].fitness.values
-
-    if previous_fitness == hallOfFame[0].fitness.values:
-        iterations_wo_improvement += 1
-    else:
-        print("improvement after:", (iterations_wo_improvement + 1) *
-              FREQ, "Fitness:", hallOfFame[0].fitness.values[0])
-        iterations_wo_improvement = 0
-
-        previous_fitness = hallOfFame[0].fitness.values
-
-    if(iterations_wo_improvement * FREQ == int(max_iterations_wo_improvement / 2)):
-        print(iterations_wo_improvement * FREQ,
-              "iterations without improvement...")
-    bestIndividuals.append(hallOfFame[0].fitness.values)
-
-    if first:
-        for logbook in ziped[1]:
-            logbooks.append(logbook)
-        first = False
-    else:
-        for k, logbook in enumerate(ziped[1]):
-            logbooks[k] += logbook
-
-    toolbox.migrate(islands)
+    if(NUM_OF_ISLANDS > 1):
+        toolbox.migrate(islands)
 
 
 print("----------END---------")
 print("Hall of fame:", hallOfFame[0], hallOfFame[0].fitness)
 
 # Save results
-pickleOut = open("./out/" + BENCHMARK_NAME + "_" + str(NUM_OF_ISLANDS) +
-                 "_" + str(MIGRATION_RATIO) + "_" + MODEL + ".pickle", "wb")
-pickle.dump(utils.result(
-    logbooks, bestIndividuals, time.time() - start_time), pickleOut)
-pickleOut.close()
-
+utils.makeTxt(hallOfFame[0].fitness.values, hallOfFame[0],
+              "out/out" + fileName[8:], fileName)
 print("\n")

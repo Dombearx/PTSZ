@@ -2,7 +2,7 @@ from subprocess import call
 
 
 num_of_islands = ["5"]
-migration_ratio = ["2"]
+migration_ratio = ["1"]
 
 models = [
     "convection"
@@ -34,7 +34,7 @@ students = [
 ]
 
 for model in models:
-    for student in ["125342"]:
+    for student in students:
         for islandNum in num_of_islands:
             for ratio in migration_ratio:
                 for n in numbers:

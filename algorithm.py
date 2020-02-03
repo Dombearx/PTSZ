@@ -21,18 +21,18 @@ import os
 if(len(sys.argv) != 6):
     print("Wrong number of arguments!")
     print("Usage:", sys.argv[0],
-          "fileName NUM_OF_ISLANDS MIGRATIONS_RATIO max_iterations_wo_improvement MODEL")
+          "fileName NUM_OF_ISLANDS MIGRATIONS_RATIO number_of_tasks MODEL")
     sys.exit()
 
 
-# nazwa benchmarka
+# nazwa pliku z danymi
 fileName = sys.argv[1]
 
 # Początkowa liczba wysp
 NUM_OF_ISLANDS = int(sys.argv[2])
 
 # Mnożnik migracji
-MIGRATION_RATIO = int(sys.argv[3])
+MIGRATION_RATIO = float(sys.argv[3])
 
 # liczba zadan w przykladzie
 number_of_tasks = int(sys.argv[4])
@@ -40,10 +40,13 @@ number_of_tasks = int(sys.argv[4])
 # model
 MODEL = sys.argv[5]
 
+# max
+max_iterations_wo_improvement = 10000
 
-POPULATION_SIZE = 100
+
+POPULATION_SIZE = 50
 ISLAND_POPULATION_SIZE = int(POPULATION_SIZE / NUM_OF_ISLANDS)
-FREQ = MIGRATION_RATIO * POPULATION_SIZE
+FREQ = int(MIGRATION_RATIO * POPULATION_SIZE)
 CXPB, MUTPB = 0.1, 1
 
 
@@ -95,7 +98,8 @@ for island in islands:
 
 first = True
 previous_fitness = None
-maxTime = 100 * number_of_tasks
+maxTime = 10 * number_of_tasks
+iterations_wo_improvement = 0
 
 print("Running:", fileName)
 print("Islands number:", NUM_OF_ISLANDS)
@@ -104,11 +108,19 @@ print("Max time [ms]:", maxTime)
 print("Model:", MODEL)
 print("----------START---------")
 start_time = time.time()
-while((time.time() - start_time) * 1000 < maxTime):
+while((time.time() - start_time) * 1000 < maxTime and iterations_wo_improvement <= max_iterations_wo_improvement / FREQ):
 
     results = toolbox.map(toolbox.algorithm, islands)
 
     islands = [island for island, logbook in results]
+
+    if previous_fitness == None:
+        previous_fitness = hallOfFame[0].fitness.values[0]
+    else:
+        if previous_fitness > hallOfFame[0].fitness.values[0]:
+            iterations_wo_improvement = 0
+        else:
+            iterations_wo_improvement += 1
 
     print("Hall of fame:", hallOfFame[0], hallOfFame[0].fitness)
 
@@ -118,6 +130,7 @@ while((time.time() - start_time) * 1000 < maxTime):
 
 print("----------END---------")
 print("Hall of fame:", hallOfFame[0], hallOfFame[0].fitness)
+print("Total time:", (time.time() - start_time) * 1000)
 
 # Save results
 utils.makeTxt(hallOfFame[0].fitness.values, hallOfFame[0],

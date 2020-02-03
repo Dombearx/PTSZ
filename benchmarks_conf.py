@@ -20,8 +20,9 @@ except ImportError:
 
 def ptszMutate(individual):
     genotype = copy.copy(individual)
-    a = random.randint(0, len(genotype) - 1)
-    b = random.randint(0, len(genotype) - 1)
+    chosen = random.randint(0, len(genotype) - 2)
+    a = chosen
+    b = chosen + 1
     individual[a] = genotype[b]
     individual[b] = genotype[a]
     return individual,
